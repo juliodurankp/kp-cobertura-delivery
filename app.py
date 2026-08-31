@@ -1,0 +1,365 @@
+import streamlit as st
+import folium
+from streamlit_folium import st_folium
+import googlemaps
+from shapely.geometry import Polygon, Point
+import pyproj
+from shapely.ops import transform
+import json
+import os
+
+def obtener_ruta_logo():
+    extensiones = ["logo.png", "logo.jpg", "logo.jpeg", "Logo.png", "LOGO.PNG"]
+    for ext in extensiones:
+        if os.path.exists(ext):
+            return ext
+    return None
+
+logo_path = obtener_ruta_logo()
+
+st.set_page_config(
+    page_title="Kitchen Partner | Cobertura Delivery Multi-Ciudad",
+    page_icon=logo_path if logo_path else "📍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+st.markdown("""
+    <style>
+        .block-container { padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
+        .kp-header {
+            background: linear-gradient(135deg, #0D2845 0%, #163B63 100%);
+            padding: 1.2rem 2rem;
+            border-radius: 12px;
+            color: white !important;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(13, 40, 69, 0.15);
+        }
+        .kp-title-container { display: flex; align-items: center; gap: 15px; }
+        .kp-title { color: #FFFFFF !important; font-size: 1.8rem; font-weight: 800; margin: 0; font-family: 'Helvetica Neue', sans-serif; }
+        .kp-subtitle { color: #FF6B4A !important; font-size: 0.95rem; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .kp-badge {
+            background-color: rgba(255, 107, 74, 0.2);
+            border: 1px solid #FF6B4A;
+            color: #FF6B4A !important;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3, 
+        [data-testid="stSidebar"] h4,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stMarkdown {
+            color: var(--text-color) !important;
+        }
+        .stButton>button {
+            background-color: #FF6B4A !important;
+            color: white !important;
+            border-radius: 8px !important;
+            border: none !important;
+            font-weight: 600 !important;
+        }
+        .stButton>button:hover {
+            background-color: #E05536 !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# 🔑 LECTURA DE API KEY (Local o Nube vía Secrets)
+if "GOOGLE_MAPS_API_KEY" in st.secrets:
+    GOOGLE_MAPS_API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
+else:
+    GOOGLE_MAPS_API_KEY = "AIzaSyC81y07cCifkIrHEm-GR0RUpfBd9XnPJ38"
+
+try:
+    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+except Exception:
+    gmaps = None
+
+# SELECTOR MULTI-CIUDAD EN LA BARRA LATERAL
+if logo_path:
+    st.sidebar.image(logo_path, use_container_width=True)
+
+st.sidebar.markdown("### 🎯 Panel de Control KP 360™")
+st.sidebar.caption("Evaluación de Coberturas Multi-Plataforma")
+
+st.sidebar.markdown("---")
+ciudad_seleccionada = st.sidebar.selectbox(
+    "📍 Selecciona la Ciudad:",
+    ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
+)
+
+# Configuración por Ciudad
+CONFIG_CIUDADES = {
+    "Mexicali": {
+        "coords": (32.6245, -115.4522),
+        "poligono": Polygon([
+            (-115.5800, 32.6630), (-115.4850, 32.6645), (-115.3500, 32.6700),
+            (-115.3200, 32.6300), (-115.3100, 32.5700), (-115.3500, 32.5300),
+            (-115.4500, 32.5300), (-115.5500, 32.5500), (-115.5850, 32.6100),
+            (-115.5800, 32.6630)
+        ]),
+        "defaults": [
+            (32.6508, -115.4522, "Victoria 52, Residencias, Mexicali"),
+            (32.6535, -115.4045, "Plaza San Pedro, Mexicali")
+        ]
+    },
+    "Tijuana": {
+        "coords": (32.5149, -117.0382),
+        "poligono": Polygon([
+            (-117.1200, 32.5400), (-116.9000, 32.5400),
+            (-116.9000, 32.4000), (-117.1200, 32.4000)
+        ]),
+        "defaults": [
+            (32.5149, -117.0382, "Zona Río, Tijuana"),
+            (32.5000, -116.9700, "Plaza Río Tijuana")
+        ]
+    },
+    "Ensenada": {
+        "coords": (31.8667, -116.5964),
+        "poligono": Polygon([
+            (-116.6500, 31.9100), (-116.5200, 31.9100),
+            (-116.5200, 31.8000), (-116.6500, 31.8000)
+        ]),
+        "defaults": [
+            (31.8667, -116.5964, "Centro, Ensenada"),
+            (31.8500, -116.6000, "Macroplaza Ensenada")
+        ]
+    },
+    "Otras Ciudades": {
+        "coords": (23.6345, -102.5528),
+        "poligono": None,
+        "defaults": [
+            (19.4326, -99.1332, "Centro Histórico, CDMX"),
+            (20.6736, -103.3440, "Guadalajara, Jalisco")
+        ]
+    }
+}
+
+cfg_activa = CONFIG_CIUDADES[ciudad_seleccionada]
+POLIGONO_URBANO = cfg_activa["poligono"]
+
+if logo_path:
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        st.image(logo_path, width=130)
+    with col2:
+        st.markdown(f"""
+            <div style="padding-top: 5px;">
+                <h1 style="color: #0D2845; font-weight: 800; margin:0; font-size: 2.1rem;">KITCHEN PARTNER</h1>
+                <p style="color: #FF6B4A; font-weight: 700; margin:0; font-size: 1rem; letter-spacing: 1px;">TU SOCIO ESTRATÉGICO EN DELIVERY • {ciudad_seleccionada.upper()}</p>
+            </div>
+        """, unsafe_allow_html=True)
+else:
+    st.markdown(f"""
+        <div class="kp-header">
+            <div class="kp-title-container">
+                <div style="background-color: #FF6B4A; color: white; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.6rem;">K</div>
+                <div>
+                    <h1 class="kp-title">KITCHEN PARTNER</h1>
+                    <p class="kp-subtitle">Tu Socio Estratégico en Delivery</p>
+                </div>
+            </div>
+            <div class="kp-badge">Mapeo de Cobertura {ciudad_seleccionada}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+@st.cache_data(show_spinner=False)
+def obtener_sugerencias_google(texto_busqueda, lat_c, lon_c):
+    if not gmaps or not texto_busqueda or len(texto_busqueda.strip()) < 2:
+        return []
+    q = texto_busqueda.strip()
+    try:
+        predictions = gmaps.places_autocomplete(
+            input_text=q,
+            components={"country": "mx"},
+            location=(lat_c, lon_c),
+            radius=25000,
+            language="es"
+        )
+        sugerencias = []
+        for p in predictions:
+            sugerencias.append({
+                "label": p['description'],
+                "place_id": p['place_id']
+            })
+        return sugerencias
+    except Exception:
+        return []
+
+@st.cache_data(show_spinner=False)
+def obtener_coords_por_place_id(place_id):
+    if not gmaps:
+        return None
+    try:
+        place_details = gmaps.place(place_id=place_id, fields=['geometry', 'formatted_address'])
+        result = place_details.get('result', {})
+        lat = result['geometry']['location']['lat']
+        lon = result['geometry']['location']['lng']
+        addr = result.get('formatted_address', '')
+        return lat, lon, addr
+    except Exception:
+        return None
+
+def recortar_con_manzana_urbana(lat, lon, radio_km):
+    proj_wgs84 = pyproj.CRS('EPSG:4326')
+    proj_utm = pyproj.CRS('EPSG:32611')
+    to_utm = pyproj.Transformer.from_crs(proj_wgs84, proj_utm, always_xy=True).transform
+    to_wgs84 = pyproj.Transformer.from_crs(proj_utm, proj_wgs84, always_xy=True).transform
+    
+    p_utm = transform(to_utm, Point(lon, lat))
+    r_m = radio_km * 1000
+    
+    box_utm = Polygon([
+        (p_utm.x - r_m, p_utm.y - r_m),
+        (p_utm.x + r_m, p_utm.y - r_m),
+        (p_utm.x + r_m, p_utm.y + r_m),
+        (p_utm.x - r_m, p_utm.y + r_m)
+    ])
+    
+    box_wgs = transform(to_wgs84, box_utm)
+    if POLIGONO_URBANO:
+        return box_wgs.intersection(POLIGONO_URBANO)
+    return box_wgs
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🔍 Filtro de Plataformas")
+apps_seleccionadas = st.sidebar.multiselect(
+    "Selecciona la(s) plataforma(s) a comparar:",
+    ["Uber Eats", "Rappi", "DiDi Food"],
+    default=["Uber Eats", "Rappi", "DiDi Food"]
+)
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🏬 Sucursales Restaurante")
+num_sucursales = st.sidebar.number_input("Número de sucursales a evaluar", 1, 5, 2)
+
+sucursales = []
+
+for i in range(num_sucursales):
+    st.sidebar.markdown(f"**📍 Sucursal {i+1}**")
+    def_lat, def_lon, def_name = cfg_activa["defaults"][i % len(cfg_activa["defaults"])]
+    
+    key_prefix = f"{ciudad_seleccionada}_suc_{i}"
+    
+    if f"{key_prefix}_lat" not in st.session_state:
+        st.session_state[f"{key_prefix}_lat"] = def_lat
+    if f"{key_prefix}_lon" not in st.session_state:
+        st.session_state[f"{key_prefix}_lon"] = def_lon
+    if f"{key_prefix}_addr" not in st.session_state:
+        st.session_state[f"{key_prefix}_addr"] = def_name
+
+    busqueda = st.sidebar.text_input(
+        f"Buscar dirección (Suc. {i+1}):", 
+        value="", 
+        placeholder="Ej: Plaza, Calle, Colonia...",
+        key=f"search_{key_prefix}"
+    )
+
+    sugerencias = obtener_sugerencias_google(busqueda, cfg_activa["coords"][0], cfg_activa["coords"][1])
+
+    if sugerencias:
+        opciones_dict = {s['label']: s['place_id'] for s in sugerencias}
+        opcion_elegida = st.sidebar.selectbox(
+            "👇 Selecciona la opción exacta:",
+            options=list(opciones_dict.keys()),
+            key=f"select_{key_prefix}"
+        )
+        
+        place_id_sel = opciones_dict[opcion_elegida]
+        res = obtener_coords_por_place_id(place_id_sel)
+        if res:
+            st.session_state[f"{key_prefix}_lat"] = res[0]
+            st.session_state[f"{key_prefix}_lon"] = res[1]
+            st.session_state[f"{key_prefix}_addr"] = res[2]
+            st.sidebar.caption(f"✅ Ubicación: {res[2][:45]}...")
+    elif busqueda.strip() != "":
+        st.sidebar.info("Buscando en Google Maps...")
+
+    sucursales.append({
+        "nombre": f"Sucursal {i+1}",
+        "lat": st.session_state[f"{key_prefix}_lat"],
+        "lon": st.session_state[f"{key_prefix}_lon"],
+        "direccion": st.session_state[f"{key_prefix}_addr"]
+    })
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("📐 Radios Operativos (km)")
+radio_didi = st.sidebar.slider("DiDi Food (km)", 0.5, 8.0, 2.5, 0.5)
+radio_rappi = st.sidebar.slider("Rappi (km)", 0.5, 10.0, 3.5, 0.5)
+radio_uber = st.sidebar.slider("Uber Eats (km)", 0.5, 12.0, 5.0, 0.5)
+
+# --- MAPA RENDERING ---
+avg_lat = sum(s["lat"] for s in sucursales) / len(sucursales)
+avg_lon = sum(s["lon"] for s in sucursales) / len(sucursales)
+
+dynamic_map_id = f"{ciudad_seleccionada}_" + "_".join([f"{s['lat']:.5f}_{s['lon']:.5f}" for s in sucursales])
+
+m = folium.Map(location=[avg_lat, avg_lon], zoom_start=12, tiles="OpenStreetMap")
+
+show_uber = "Uber Eats" in apps_seleccionadas
+show_rappi = "Rappi" in apps_seleccionadas
+show_didi = "DiDi Food" in apps_seleccionadas
+varias_apps = len(apps_seleccionadas) > 1
+fill_opacity_val = 0.05 if varias_apps else 0.22
+weight_val = 2.5 if varias_apps else 2.0
+
+name_uber_tot = "<span style='color:#06C167; font-weight:bold;'>🟢 Uber Eats</span> - Cobertura Ciudad"
+name_rappi_tot = "<span style='color:#FF441F; font-weight:bold;'>🔴 Rappi</span> - Cobertura Ciudad"
+name_didi_tot = "<span style='color:#FF8800; font-weight:bold;'>🟠 DiDi Food</span> - Cobertura Ciudad"
+
+name_uber_suc = "<span style='color:#06C167; font-weight:bold;'>🛵 Uber Eats</span> - Polígonos Sucursal"
+name_rappi_suc = "<span style='color:#FF441F; font-weight:bold;'>🛵 Rappi</span> - Polígonos Sucursal"
+name_didi_suc = "<span style='color:#FF8800; font-weight:bold;'>🛵 DiDi Food</span> - Polígonos Sucursal"
+name_puntos = "<span style='color:#0D2845; font-weight:bold;'>🏬 Sucursales KP</span>"
+
+if POLIGONO_URBANO:
+    if show_uber:
+        layer_u_tot = folium.FeatureGroup(name=name_uber_tot, show=True).add_to(m)
+        folium.GeoJson(POLIGONO_URBANO, style_function=lambda x: {'fillColor': 'transparent', 'color': '#06C167', 'weight': 2, 'dashArray': '6, 6'}).add_to(layer_u_tot)
+    if show_rappi:
+        layer_r_tot = folium.FeatureGroup(name=name_rappi_tot, show=True).add_to(m)
+        folium.GeoJson(POLIGONO_URBANO, style_function=lambda x: {'fillColor': 'transparent', 'color': '#FF441F', 'weight': 2, 'dashArray': '6, 6'}).add_to(layer_r_tot)
+    if show_didi:
+        layer_d_tot = folium.FeatureGroup(name=name_didi_tot, show=True).add_to(m)
+        folium.GeoJson(POLIGONO_URBANO, style_function=lambda x: {'fillColor': 'transparent', 'color': '#FF8800', 'weight': 2, 'dashArray': '6, 6'}).add_to(layer_d_tot)
+
+layer_u_suc = folium.FeatureGroup(name=name_uber_suc, show=show_uber).add_to(m)
+layer_r_suc = folium.FeatureGroup(name=name_rappi_suc, show=show_rappi).add_to(m)
+layer_d_suc = folium.FeatureGroup(name=name_didi_suc, show=show_didi).add_to(m)
+layer_puntos = folium.FeatureGroup(name=name_puntos).add_to(m)
+
+colores_icono = ["red", "blue", "purple", "orange", "darkgreen"]
+
+for i, suc in enumerate(sucursales):
+    lat, lon = suc["lat"], suc["lon"]
+    color_m = colores_icono[i % len(colores_icono)]
+
+    if show_uber:
+        poly_u = recortar_con_manzana_urbana(lat, lon, radio_uber)
+        folium.GeoJson(poly_u, style_function=lambda x: {'fillColor': '#06C167', 'color': '#048A49', 'weight': weight_val, 'fillOpacity': fill_opacity_val}).add_to(layer_u_suc)
+
+    if show_rappi:
+        poly_r = recortar_con_manzana_urbana(lat, lon, radio_rappi)
+        folium.GeoJson(poly_r, style_function=lambda x: {'fillColor': '#FF441F', 'color': '#B3260A', 'weight': weight_val, 'fillOpacity': fill_opacity_val}).add_to(layer_r_suc)
+
+    if show_didi:
+        poly_d = recortar_con_manzana_urbana(lat, lon, radio_didi)
+        folium.GeoJson(poly_d, style_function=lambda x: {'fillColor': '#FF8800', 'color': '#B35F00', 'weight': weight_val, 'fillOpacity': fill_opacity_val}).add_to(layer_d_suc)
+
+    folium.Marker(
+        [lat, lon],
+        popup=f"<b>{suc['nombre']}</b><br>{suc['direccion']}",
+        tooltip=suc["nombre"],
+        icon=folium.Icon(color=color_m, icon="store", prefix="fa")
+    ).add_to(layer_puntos)
+
+folium.LayerControl(collapsed=False).add_to(m)
+
+st_folium(m, use_container_width=True, height=750, key=f"render_map_{dynamic_map_id}", returned_objects=[])
