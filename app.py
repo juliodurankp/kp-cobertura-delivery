@@ -15,32 +15,65 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS NATIVOS Y ESTABLES
+# Estilos CSS NATIVOS Y LIMPIOS
 st.markdown("""
     <style>
         .block-container { padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Banner Header con tarjeta protectora para el logo */
-        .kp-header-card {
-            background-color: #0D2845;
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
+        /* Encabezado Superior Limpio Integrado */
+        .kp-header-clean {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-bottom: 2px solid rgba(255, 107, 74, 0.3);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .kp-title-text {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color) !important;
+        }
+
+        .kp-subtitle-text {
+            font-size: 0.85rem;
+            color: #FF6B4A !important;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-top: 2px;
         }
 
         .kp-badge-pill {
             background-color: #FF6B4A;
             color: #FFFFFF !important;
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 6px 16px;
+            border-radius: 16px;
+            font-size: 0.8rem;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
+        }
+
+        /* Adapta la K del sidebar automáticamente según el tema del Sidebar */
+        .sidebar-logo-wrapper {
+            text-align: center;
+            padding: 5px 0 15px 0;
+        }
+
+        /* En Modo Oscuro, vuelve blanca la K oscura mediante CSS nativo */
+        [data-testid="stSidebar"] [data-testid="stImage"] img {
+            transition: filter 0.2s ease;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            [data-testid="stSidebar"] [data-testid="stImage"] img {
+                filter: brightness(0) invert(1);
+            }
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
@@ -63,7 +96,13 @@ except Exception:
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    st.markdown("## 🎯 Panel KP 360™")
+    # Mostramos la K nativa usando st.image (Streamlit maneja la ruta)
+    if os.path.exists("logo_k_dark.png"):
+        st.image("logo_k_dark.png", width=100)
+    elif os.path.exists("logo.png"):
+        st.image("logo.png", width=100)
+
+    st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
     st.markdown("---")
     
@@ -72,23 +111,18 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- ENCABEZADO CON CONTENEDOR DE CONTRASTE ASEGURADO ---
-with st.container():
-    col_logo, col_badge = st.columns([3, 1])
-    
-    # Renderizamos la tarjeta corporativa con logo claro garantizado
-    st.markdown(f"""
-        <div class="kp-header-card">
-            <div style="display: flex; align-items: center;">
-                <h1 style="color: #FFFFFF !important; margin: 0; font-size: 1.6rem; font-weight: 800;">
-                    KITCHEN PARTNER 360™
-                </h1>
-            </div>
-            <div class="kp-badge-pill">
-                COBERTURA {ciudad_seleccionada.upper()}
-            </div>
+# --- ENCABEZADO SUPERIOR LIMPIO ---
+st.markdown(f"""
+    <div class="kp-header-clean">
+        <div>
+            <h1 class="kp-title-text">KITCHEN PARTNER 360™</h1>
+            <div class="kp-subtitle-text">Análisis y Mapeo Estratégico de Cobertura Delivery</div>
         </div>
-    """, unsafe_allow_html=True)
+        <div class="kp-badge-pill">
+            COBERTURA {ciudad_seleccionada.upper()}
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Configuración y Polígonos por Ciudad
 CONFIG_CIUDADES = {
