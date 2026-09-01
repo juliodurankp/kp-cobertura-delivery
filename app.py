@@ -6,7 +6,6 @@ from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
 import os
-import base64
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -16,50 +15,40 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Carga en Base64 de ambas versiones originales de la K
-def get_base64_img(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return ""
-
-img_k_dark_b64 = get_base64_img("logo_k_dark.png")
-img_k_light_b64 = get_base64_img("logo_k_light.png")
-
-# CSS Estricto (con llaves duplicadas {{ }} para evitar SyntaxError en f-string)
-st.markdown(f"""
+# Estilos CSS NATIVOS
+st.markdown("""
     <style>
-        .block-container {{ padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
+        .block-container { padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Encabezado Superior Limpio Integrado */
-        .kp-header-clean {{
+        /* Encabezado Superior Limpio */
+        .kp-header-clean {
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-bottom: 2px solid rgba(255, 107, 74, 0.3);
             padding-bottom: 12px;
             margin-bottom: 20px;
-        }}
+        }
 
-        .kp-title-text {{
+        .kp-title-text {
             font-size: 1.6rem;
             font-weight: 800;
             letter-spacing: -0.5px;
             margin: 0;
             padding: 0;
             color: var(--text-color) !important;
-        }}
+        }
 
-        .kp-subtitle-text {{
+        .kp-subtitle-text {
             font-size: 0.85rem;
             color: #FF6B4A !important;
             font-weight: 700;
             letter-spacing: 0.8px;
             text-transform: uppercase;
             margin-top: 2px;
-        }}
+        }
 
-        .kp-badge-pill {{
+        .kp-badge-pill {
             background-color: #FF6B4A;
             color: #FFFFFF !important;
             padding: 6px 16px;
@@ -68,45 +57,29 @@ st.markdown(f"""
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-        }}
+        }
 
-        /* Contenedor del Isotipo */
-        .sidebar-logo-container {{
+        /* Tarjeta Contenedora Neutra Blanca para asegurar visibilidad de la K Azul */
+        .sidebar-logo-card {
+            background-color: #FFFFFF !important;
+            border-radius: 12px;
+            padding: 12px;
             text-align: center;
-            padding: 5px 0 15px 0;
-        }}
-        
-        .sidebar-logo-container img {{
-            width: 100px;
+            margin-bottom: 15px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .sidebar-logo-card img {
+            width: 85px;
             height: auto;
-        }}
-
-        /* MODO LIGHT (Predeterminado): Muestra K Azul con Fondo Claro */
-        .kp-k-dark-version {{ display: inline-block !important; }}
-        .kp-k-light-version {{ display: none !important; }}
-
-        /* MODO DARK: Cuando Streamlit o el Navegador están en Modo Oscuro */
-        .stApp[data-theme="dark"] .kp-k-dark-version,
-        [data-theme="dark"] .kp-k-dark-version,
-        [data-testid="stSidebar"][data-theme="dark"] .kp-k-dark-version {{
-            display: none !important;
-        }}
-
-        .stApp[data-theme="dark"] .kp-k-light-version,
-        [data-theme="dark"] .kp-k-light-version,
-        [data-testid="stSidebar"][data-theme="dark"] .kp-k-light-version {{
-            display: inline-block !important;
-        }}
-
-        @media (prefers-color-scheme: dark) {{
-            .stApp:not([data-theme="light"]) .kp-k-dark-version {{ display: none !important; }}
-            .stApp:not([data-theme="light"]) .kp-k-light-version {{ display: inline-block !important; }}
-        }}
+            display: inline-block;
+        }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
             color: var(--text-color) !important;
-        }}
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -121,14 +94,14 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL ---
+# --- BARRA LATERAL CON TARJETA DE CONTRASTE PREDETERMINADA ---
 with st.sidebar:
-    st.markdown(f"""
-        <div class="sidebar-logo-container">
-            <img src="{img_k_dark_b64}" class="kp-k-dark-version" alt="KP Logo Azul">
-            <img src="{img_k_light_b64}" class="kp-k-light-version" alt="KP Logo Blanco">
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-logo-card">', unsafe_allow_html=True)
+    if os.path.exists("logo_k_dark.png"):
+        st.image("logo_k_dark.png")
+    elif os.path.exists("logo.png"):
+        st.image("logo.png")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
