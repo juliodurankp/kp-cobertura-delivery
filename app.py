@@ -23,10 +23,9 @@ def get_base64_img(file_path):
             return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
     return ""
 
-img_dark_b64 = get_base64_img("logo_k_dark.png")
 img_light_b64 = get_base64_img("logo_k_light.png")
 
-# CSS para Banner Superior e Isotipo K Adaptable
+# CSS para Fijar Barra Lateral y Banner en Azul Marino Corporativo (#0D2845)
 st.markdown(f"""
     <style>
         .block-container {{ padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
@@ -74,41 +73,30 @@ st.markdown(f"""
             box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
         }}
 
-        /* Isotipo K en Sidebar con conmutación dinámica por Tema */
+        /* Fondo Fijo Azul Marino Corporativo para el Sidebar */
+        [data-testid="stSidebar"] {{
+            background-color: #0D2845 !important;
+        }}
+
         .sidebar-logo-container {{
             text-align: center;
-            padding: 5px 0 15px 0;
+            padding: 10px 0 15px 0;
         }}
+        
         .sidebar-logo-container img {{
             width: 100px;
             height: auto;
         }}
-        
-        /* Por defecto en Modo Claro se muestra la K Azul */
-        .kp-logo-light-theme {{ display: inline-block; }}
-        .kp-logo-dark-theme {{ display: none; }}
 
-        /* Reglas de conmutación a Modo Oscuro en Streamlit y Sistema Operativo */
-        [data-testid="stAppViewContainer"][data-theme="dark"] .kp-logo-light-theme,
-        body[data-theme="dark"] .kp-logo-light-theme,
-        .stApp[data-theme="dark"] .kp-logo-light-theme {{
-            display: none !important;
-        }}
-
-        [data-testid="stAppViewContainer"][data-theme="dark"] .kp-logo-dark-theme,
-        body[data-theme="dark"] .kp-logo-dark-theme,
-        .stApp[data-theme="dark"] .kp-logo-dark-theme {{
-            display: inline-block !important;
-        }}
-
-        @media (prefers-color-scheme: dark) {{
-            .kp-logo-light-theme {{ display: none; }}
-            .kp-logo-dark-theme {{ display: inline-block; }}
-        }}
-
+        /* Forzar texto claro en Sidebar siempre */
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
-            color: var(--text-color) !important;
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] caption {{
+            color: #FFFFFF !important;
+        }}
+
+        [data-testid="stSidebar"] caption {{
+            color: #CBD5E1 !important;
         }}
     </style>
 """, unsafe_allow_html=True)
@@ -124,12 +112,11 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL ---
+# --- BARRA LATERAL CON K BLANCA Y FONDO AZUL ---
 with st.sidebar:
     st.markdown(f"""
         <div class="sidebar-logo-container">
-            <img src="{img_dark_b64}" class="kp-logo-light-theme" alt="KP Logo Dark">
-            <img src="{img_light_b64}" class="kp-logo-dark-theme" alt="KP Logo Light">
+            <img src="{img_light_b64}" alt="KP Logo Blanco">
         </div>
     """, unsafe_allow_html=True)
 
