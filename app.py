@@ -26,7 +26,7 @@ def get_base64_img(file_path):
 img_k_dark_b64 = get_base64_img("logo_k_dark.png")
 img_k_light_b64 = get_base64_img("logo_k_light.png")
 
-# CSS para alternancia por selector nativo de Streamlit
+# CSS Estricto (con llaves duplicadas {{ }} para evitar SyntaxError en f-string)
 st.markdown(f"""
     <style>
         .block-container {{ padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
@@ -39,7 +39,7 @@ st.markdown(f"""
             border-bottom: 2px solid rgba(255, 107, 74, 0.3);
             padding-bottom: 12px;
             margin-bottom: 20px;
-        }
+        }}
 
         .kp-title-text {{
             font-size: 1.6rem;
@@ -81,27 +81,26 @@ st.markdown(f"""
             height: auto;
         }}
 
-        /* REGLAS DE TEMA INTERNO DE STREAMLIT */
-        /* Por defecto (MODO LIGHT): Muestra K Azul con Fondo Claro */
+        /* MODO LIGHT (Predeterminado): Muestra K Azul con Fondo Claro */
         .kp-k-dark-version {{ display: inline-block !important; }}
         .kp-k-light-version {{ display: none !important; }}
 
-        /* Cuando el switch de Streamlit cambia a MODO DARK: Muestra K Blanca con Fondo Oscuro */
-        [data-testid="stAppViewContainer"]:has(.stApp[data-theme="dark"]),
+        /* MODO DARK: Cuando Streamlit o el Navegador están en Modo Oscuro */
         .stApp[data-theme="dark"] .kp-k-dark-version,
-        [data-theme="dark"] .kp-k-dark-version {{
+        [data-theme="dark"] .kp-k-dark-version,
+        [data-testid="stSidebar"][data-theme="dark"] .kp-k-dark-version {{
             display: none !important;
         }}
 
         .stApp[data-theme="dark"] .kp-k-light-version,
-        [data-theme="dark"] .kp-k-light-version {{
+        [data-theme="dark"] .kp-k-light-version,
+        [data-testid="stSidebar"][data-theme="dark"] .kp-k-light-version {{
             display: inline-block !important;
         }}
 
-        /* RESPALDO POR PREFERENCIA DEL SISTEMA OPERATIVO */
         @media (prefers-color-scheme: dark) {{
-            :root:not([data-theme="light"]) .kp-k-dark-version {{ display: none !important; }}
-            :root:not([data-theme="light"]) .kp-k-light-version {{ display: inline-block !important; }}
+            .stApp:not([data-theme="light"]) .kp-k-dark-version {{ display: none !important; }}
+            .stApp:not([data-theme="light"]) .kp-k-light-version {{ display: inline-block !important; }}
         }}
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
