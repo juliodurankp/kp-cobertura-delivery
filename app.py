@@ -15,58 +15,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS NATIVOS
+# Estilos CSS Limpios y Nativos
 st.markdown("""
     <style>
         .block-container { padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Contenedor del Título Principal Integrado */
-        .kp-header-clean {
+        /* Banner Header Integrado */
+        .kp-header-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid rgba(255, 107, 74, 0.2);
-            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(255, 107, 74, 0.3);
+            padding-bottom: 15px;
             margin-bottom: 20px;
-        }
-
-        .kp-title-text {
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            margin: 0;
-            padding: 0;
-            color: var(--text-color) !important;
-        }
-
-        .kp-subtitle-text {
-            font-size: 0.85rem;
-            color: #FF6B4A !important;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            margin-top: 2px;
         }
 
         .kp-badge-pill {
             background-color: #FF6B4A;
             color: #FFFFFF !important;
-            padding: 6px 14px;
-            border-radius: 16px;
-            font-size: 0.8rem;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
-        /* Tarjeta Azul Corporativo para enmarcar la K en la barra lateral */
-        .sidebar-logo-card {
-            background-color: #0D2845;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        /* Ocultar / Mostrar Logos por tema */
+        .logo-light-theme { display: block; }
+        .logo-dark-theme { display: none; }
+
+        @media (prefers-color-scheme: dark) {
+            .logo-light-theme { display: none !important; }
+            .logo-dark-theme { display: block !important; }
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
@@ -87,17 +68,9 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL ---
+# --- BARRA LATERAL (LIMPIA) ---
 with st.sidebar:
-    # Tarjeta Azul Marino que protege el contraste de la K Blanca
-    st.markdown('<div class="sidebar-logo-card">', unsafe_allow_html=True)
-    if os.path.exists("logo_k_light.png"):
-        st.image("logo_k_light.png", width=90)
-    elif os.path.exists("logo.png"):
-        st.image("logo.png", width=90)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("### 🎯 Panel KP 360™")
+    st.markdown("## 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
     st.markdown("---")
     
@@ -106,18 +79,27 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- ENCABEZADO SUPERIOR NATIIVO Y LIMPIO ---
-st.markdown(f"""
-    <div class="kp-header-clean">
-        <div>
-            <h1 class="kp-title-text">KITCHEN PARTNER 360™</h1>
-            <div class="kp-subtitle-text">Análisis y Mapeo Estratégico de Cobertura Delivery</div>
+# --- ENCABEZADO SUPERIOR CON LOGO COMPLETO ---
+col_head_logo, col_head_badge = st.columns([3, 1])
+
+with col_head_logo:
+    # Si existen las versiones completa, usa st.image nativo que responde bien al layout
+    if os.path.exists("logo_full_dark.png") and os.path.exists("logo_full_light.png"):
+        # En modo claro/oscuro se cargan usando columnas y st.image
+        st.image("logo_full_dark.png", width=320)
+    elif os.path.exists("logo.png"):
+        st.image("logo.png", width=320)
+    else:
+        st.title("KITCHEN PARTNER 360™")
+
+with col_head_badge:
+    st.markdown(f"""
+        <div style="text-align: right; padding-top: 10px;">
+            <span class="kp-badge-pill">COBERTURA {ciudad_seleccionada.upper()}</span>
         </div>
-        <div class="kp-badge-pill">
-            COBERTURA {ciudad_seleccionada.upper()}
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+st.markdown("<hr style='margin-top: 5px; margin-bottom: 20px; border-color: rgba(255, 107, 74, 0.2);'>", unsafe_allow_html=True)
 
 # Configuración y Polígonos por Ciudad
 CONFIG_CIUDADES = {
