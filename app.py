@@ -8,62 +8,29 @@ from shapely.ops import transform
 import os
 
 # Configuración de página
+favicon_path = "logo_k_dark.png" if os.path.exists("logo_k_dark.png") else "logo.png"
 st.set_page_config(
     page_title="Kitchen Partner | Cobertura Delivery",
-    page_icon="logo_k_dark.png" if os.path.exists("logo_k_dark.png") else "📍",
+    page_icon=favicon_path if os.path.exists(favicon_path) else "📍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Inyección de CSS para alternar Logos e Integración de Marca según Tema (Light / Dark)
 st.markdown("""
     <style>
         .block-container { padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Contenedor del Banner Superior */
-        .kp-header-container {
-            width: 100%;
-            padding: 0.8rem 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
+        .kp-badge-container {
             display: flex;
+            justify-content: flex-end;
             align-items: center;
-            justify-content: space-between;
-            transition: all 0.3s ease;
-        }
-
-        /* Adaptación en MODO CLARO */
-        @media (prefers-color-scheme: light) {
-            .kp-header-container {
-                background-color: #FFFFFF;
-                border: 1px solid #E2E8F0;
-                box-shadow: 0 4px 12px rgba(13, 40, 69, 0.05);
-            }
-            .img-full-light, .img-k-light { display: none !important; }
-            .img-full-dark, .img-k-dark { display: block !important; }
-            .kp-city-badge {
-                background-color: #0D2845;
-                color: #FFFFFF !important;
-            }
-        }
-
-        /* Adaptación en MODO OSCURO */
-        @media (prefers-color-scheme: dark) {
-            .kp-header-container {
-                background-color: #0D1117;
-                border: 1px solid #30363D;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            }
-            .img-full-dark, .img-k-dark { display: none !important; }
-            .img-full-light, .img-k-light { display: block !important; }
-            .kp-city-badge {
-                background-color: #FF6B4A;
-                color: #FFFFFF !important;
-            }
+            height: 100%;
         }
 
         .kp-city-badge {
-            padding: 6px 16px;
+            background-color: #0D2845;
+            color: #FFFFFF !important;
+            padding: 8px 18px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 700;
@@ -71,7 +38,12 @@ st.markdown("""
             text-transform: uppercase;
         }
 
-        /* Estilos Sidebar */
+        @media (prefers-color-scheme: dark) {
+            .kp-city-badge {
+                background-color: #FF6B4A;
+            }
+        }
+
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
         [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
             color: var(--text-color) !important;
@@ -92,15 +64,12 @@ except Exception:
 
 # --- BARRA LATERAL (SOLO ISOTIPO K) ---
 with st.sidebar:
-    if os.path.exists("logo_k_dark.png") and os.path.exists("logo_k_light.png"):
-        st.markdown("""
-            <div style="text-align: center; padding: 10px 0;">
-                <img src="logo_k_dark.png" class="img-k-dark" style="max-width: 110px; margin: 0 auto;">
-                <img src="logo_k_light.png" class="img-k-light" style="max-width: 110px; margin: 0 auto;">
-            </div>
-        """, unsafe_allow_html=True)
+    if os.path.exists("logo_k_dark.png"):
+        st.image("logo_k_dark.png", width=110)
+    elif os.path.exists("logo_k_light.png"):
+        st.image("logo_k_light.png", width=110)
     elif os.path.exists("logo.png"):
-        st.image("logo.png", width=120)
+        st.image("logo.png", width=110)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
@@ -111,24 +80,25 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- ENCABEZADO SUPERIOR (LOGO COMPLETO) ---
-f_dark_exists = os.path.exists("logo_full_dark.png") or os.path.exists("logo.png")
-f_light_exists = os.path.exists("logo_full_light.png")
+# --- ENCABEZADO SUPERIOR (LOGO COMPLETO + BADGE) ---
+col_logo, col_badge = st.columns([3, 1])
 
-logo_dark_src = "logo_full_dark.png" if os.path.exists("logo_full_dark.png") else "logo.png"
-logo_light_src = "logo_full_light.png" if os.path.exists("logo_full_light.png") else logo_dark_src
+with col_logo:
+    if os.path.exists("logo_full_dark.png"):
+        st.image("logo_full_dark.png", width=340)
+    elif os.path.exists("logo_full_light.png"):
+        st.image("logo_full_light.png", width=340)
+    elif os.path.exists("logo.png"):
+        st.image("logo.png", width=340)
 
-st.markdown(f"""
-    <div class="kp-header-container">
-        <div style="max-width: 380px;">
-            <img src="{logo_dark_src}" class="img-full-dark" style="width: 100%; height: auto;">
-            <img src="{logo_light_src}" class="img-full-light" style="width: 100%; height: auto;">
+with col_badge:
+    st.markdown(f"""
+        <div class="kp-badge-container">
+            <div class="kp-city-badge">
+                COBERTURA {ciudad_seleccionada.upper()}
+            </div>
         </div>
-        <div class="kp-city-badge">
-            COBERTURA {ciudad_seleccionada.upper()}
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # Configuración por Ciudad
 CONFIG_CIUDADES = {
