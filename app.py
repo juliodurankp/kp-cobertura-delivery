@@ -6,23 +6,33 @@ from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
 import os
+import base64
 
 # Configuración inicial de la página
-favicon_path = "logo_k_dark.png" if os.path.exists("logo_k_dark.png") else "logo.png"
 st.set_page_config(
     page_title="Kitchen Partner | Cobertura Delivery",
-    page_icon=favicon_path if os.path.exists(favicon_path) else "📍",
+    page_icon="📍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS Limpios y Adaptables
-st.markdown("""
+# Función helper para codificar imágenes locales a Base64
+def get_base64_img(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return ""
+
+img_dark_b64 = get_base64_img("logo_k_dark.png")
+img_light_b64 = get_base64_img("logo_k_light.png")
+
+# CSS para Banner Superior e Isotipo K Adaptable
+st.markdown(f"""
     <style>
-        .block-container { padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
+        .block-container {{ padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
         
-        /* Banner Header Tipográfico Opción B */
-        .kp-header-b {
+        /* Banner Header Tipográfico */
+        .kp-header-b {{
             background: linear-gradient(135deg, #0D2845 0%, #163B63 100%);
             border-radius: 12px;
             padding: 1.1rem 1.8rem;
@@ -32,27 +42,27 @@ st.markdown("""
             box-shadow: 0 4px 15px rgba(13, 40, 69, 0.18);
             margin-bottom: 1.2rem;
             color: white !important;
-        }
+        }}
 
-        .kp-header-title {
+        .kp-header-title {{
             font-size: 1.5rem;
             font-weight: 800;
             color: #FFFFFF !important;
             margin: 0;
             letter-spacing: 0.5px;
             font-family: 'Helvetica Neue', sans-serif;
-        }
+        }}
 
-        .kp-header-sub {
+        .kp-header-sub {{
             font-size: 0.85rem;
             color: #FF6B4A !important;
             margin: 0;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-        }
+        }}
 
-        .kp-city-badge {
+        .kp-city-badge {{
             background-color: #FF6B4A;
             color: #FFFFFF !important;
             padding: 6px 16px;
@@ -62,17 +72,48 @@ st.markdown("""
             letter-spacing: 1px;
             text-transform: uppercase;
             box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
-        }
+        }}
 
-        /* Ajustes Sidebar */
+        /* Isotipo K en Sidebar con conmutación dinámica por Tema */
+        .sidebar-logo-container {{
+            text-align: center;
+            padding: 5px 0 15px 0;
+        }}
+        .sidebar-logo-container img {{
+            width: 100px;
+            height: auto;
+        }}
+        
+        /* Por defecto en Modo Claro se muestra la K Azul */
+        .kp-logo-light-theme {{ display: inline-block; }}
+        .kp-logo-dark-theme {{ display: none; }}
+
+        /* Reglas de conmutación a Modo Oscuro en Streamlit y Sistema Operativo */
+        [data-testid="stAppViewContainer"][data-theme="dark"] .kp-logo-light-theme,
+        body[data-theme="dark"] .kp-logo-light-theme,
+        .stApp[data-theme="dark"] .kp-logo-light-theme {{
+            display: none !important;
+        }}
+
+        [data-testid="stAppViewContainer"][data-theme="dark"] .kp-logo-dark-theme,
+        body[data-theme="dark"] .kp-logo-dark-theme,
+        .stApp[data-theme="dark"] .kp-logo-dark-theme {{
+            display: inline-block !important;
+        }}
+
+        @media (prefers-color-scheme: dark) {{
+            .kp-logo-light-theme {{ display: none; }}
+            .kp-logo-dark-theme {{ display: inline-block; }}
+        }}
+
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
             color: var(--text-color) !important;
-        }
+        }}
     </style>
 """, unsafe_allow_html=True)
 
-# 🔑 LECTURA DE API KEY
+# 🔑 LECTURA DE API KEY DE GOOGLE MAPS
 if "GOOGLE_MAPS_API_KEY" in st.secrets:
     GOOGLE_MAPS_API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
 else:
@@ -83,14 +124,14 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL (ISOTIPO K NATIVO SIN RECORTES) ---
+# --- BARRA LATERAL ---
 with st.sidebar:
-    if os.path.exists("logo_k_dark.png"):
-        st.image("logo_k_dark.png", width=110)
-    elif os.path.exists("logo_k_light.png"):
-        st.image("logo_k_light.png", width=110)
-    elif os.path.exists("logo.png"):
-        st.image("logo.png", width=110)
+    st.markdown(f"""
+        <div class="sidebar-logo-container">
+            <img src="{img_dark_b64}" class="kp-logo-light-theme" alt="KP Logo Dark">
+            <img src="{img_light_b64}" class="kp-logo-dark-theme" alt="KP Logo Light">
+        </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
@@ -101,7 +142,7 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- ENCABEZADO SUPERIOR OPCIÓN B (BANNER TIPOGRÁFICO ELEGANTE) ---
+# --- BANNER ENCABEZADO SUPERIOR ---
 st.markdown(f"""
     <div class="kp-header-b">
         <div>
@@ -114,7 +155,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Configuración por Ciudad
+# Configuración y Polígonos por Ciudad
 CONFIG_CIUDADES = {
     "Mexicali": {
         "coords": (32.6245, -115.4522),
@@ -283,7 +324,7 @@ radio_didi = st.sidebar.slider("DiDi Food (km)", 0.5, 8.0, 2.5, 0.5)
 radio_rappi = st.sidebar.slider("Rappi (km)", 0.5, 10.0, 3.5, 0.5)
 radio_uber = st.sidebar.slider("Uber Eats (km)", 0.5, 12.0, 5.0, 0.5)
 
-# MAPA
+# RENDERING MAPA
 avg_lat = sum(s["lat"] for s in sucursales) / len(sucursales)
 avg_lon = sum(s["lon"] for s in sucursales) / len(sucursales)
 dynamic_map_id = f"{ciudad_seleccionada}_" + "_".join([f"{s['lat']:.5f}_{s['lon']:.5f}" for s in sucursales])
