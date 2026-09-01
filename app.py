@@ -6,53 +6,53 @@ from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
 import os
-import base64
 
-# Función para convertir imágenes a HTML Base64 (Evita que se rompan o corten)
-def get_image_base64(path):
-    if os.path.exists(path):
-        with open(path, "rb") as image_file:
-            encoded = base64.b64encode(image_file.read()).decode()
-            return f"data:image/png;base64,{encoded}"
-    return None
-
-# Carga de imágenes
-img_k_dark = get_image_base64("logo_k_dark.png")
-img_k_light = get_image_base64("logo_k_light.png")
-img_full_light = get_image_base64("logo_full_light.png")
-img_full_dark = get_image_base64("logo_full_dark.png")
-
+# Configuración inicial de la página
+favicon_path = "logo_k_dark.png" if os.path.exists("logo_k_dark.png") else "logo.png"
 st.set_page_config(
     page_title="Kitchen Partner | Cobertura Delivery",
-    page_icon=img_k_dark if img_k_dark else "📍",
+    page_icon=favicon_path if os.path.exists(favicon_path) else "📍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS Profesional: Manejo del Banner Fijo y Logos por Tema
-st.markdown(f"""
+# Estilos CSS Limpios y Adaptables
+st.markdown("""
     <style>
-        .block-container {{ padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
+        .block-container { padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Banner Header Fijo KP (Azul Marino Corporativo) */
-        .kp-banner {{
+        /* Banner Header Tipográfico Opción B */
+        .kp-header-b {
             background: linear-gradient(135deg, #0D2845 0%, #163B63 100%);
             border-radius: 12px;
-            padding: 1rem 1.8rem;
+            padding: 1.1rem 1.8rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 15px rgba(13, 40, 69, 0.2);
+            box-shadow: 0 4px 15px rgba(13, 40, 69, 0.18);
             margin-bottom: 1.2rem;
-        }}
+            color: white !important;
+        }
 
-        .kp-banner-logo img {{
-            height: 55px;
-            width: auto;
-            object-fit: contain;
-        }}
+        .kp-header-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #FFFFFF !important;
+            margin: 0;
+            letter-spacing: 0.5px;
+            font-family: 'Helvetica Neue', sans-serif;
+        }
 
-        .kp-city-badge {{
+        .kp-header-sub {
+            font-size: 0.85rem;
+            color: #FF6B4A !important;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .kp-city-badge {
             background-color: #FF6B4A;
             color: #FFFFFF !important;
             padding: 6px 16px;
@@ -61,21 +61,14 @@ st.markdown(f"""
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-        }}
+            box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
+        }
 
-        /* Manejo dinámico del Isotipo en Sidebar según tema */
-        .sidebar-logo-dark {{ display: block; }}
-        .sidebar-logo-light {{ display: none; }}
-
-        @media (prefers-color-scheme: dark) {{
-            .sidebar-logo-dark {{ display: none !important; }}
-            .sidebar-logo-light {{ display: block !important; }}
-        }}
-
+        /* Ajustes Sidebar */
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
             color: var(--text-color) !important;
-        }}
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -90,18 +83,14 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL (ISOTIPO K) ---
+# --- BARRA LATERAL (ISOTIPO K NATIVO SIN RECORTES) ---
 with st.sidebar:
-    # Renderizado seguro Base64
-    html_sidebar = '<div style="text-align: center; margin-bottom: 10px;">'
-    if img_k_dark and img_k_light:
-        html_sidebar += f'<img src="{img_k_dark}" class="sidebar-logo-dark" style="max-width: 90px; margin: 0 auto;">'
-        html_sidebar += f'<img src="{img_k_light}" class="sidebar-logo-light" style="max-width: 90px; margin: 0 auto;">'
-    elif img_k_dark:
-        html_sidebar += f'<img src="{img_k_dark}" style="max-width: 90px; margin: 0 auto;">'
-    html_sidebar += '</div>'
-    
-    st.markdown(html_sidebar, unsafe_allow_html=True)
+    if os.path.exists("logo_k_dark.png"):
+        st.image("logo_k_dark.png", width=110)
+    elif os.path.exists("logo_k_light.png"):
+        st.image("logo_k_light.png", width=110)
+    elif os.path.exists("logo.png"):
+        st.image("logo.png", width=110)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
@@ -112,13 +101,12 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- BANNER ENCABEZADO SUPERIOR ---
-logo_banner_src = img_full_light if img_full_light else img_full_dark
-
+# --- ENCABEZADO SUPERIOR OPCIÓN B (BANNER TIPOGRÁFICO ELEGANTE) ---
 st.markdown(f"""
-    <div class="kp-banner">
-        <div class="kp-banner-logo">
-            <img src="{logo_banner_src}">
+    <div class="kp-header-b">
+        <div>
+            <h1 class="kp-header-title">KITCHEN PARTNER 360™</h1>
+            <p class="kp-header-sub">Análisis y Mapeo Estratégico de Cobertura Delivery</p>
         </div>
         <div class="kp-city-badge">
             COBERTURA {ciudad_seleccionada.upper()}
