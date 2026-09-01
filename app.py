@@ -6,6 +6,8 @@ from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
 import os
+import base64
+import streamlit.components.v1 as components
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -15,12 +17,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS NATIVOS (Sin banners rígidos ni choques de color)
+# Carga de imágenes en Base64
+def get_base64_img(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return ""
+
+img_dark_b64 = get_base64_img("logo_k_dark.png")
+img_light_b64 = get_base64_img("logo_k_light.png")
+
+# Estilos CSS
 st.markdown("""
     <style>
         .block-container { padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Contenedor del Título Principal Integrado */
         .kp-header-clean {
             display: flex;
             align-items: center;
@@ -59,12 +70,52 @@ st.markdown("""
             text-transform: uppercase;
         }
 
+        .sidebar-logo-container {
+            text-align: center;
+            padding: 5px 0 15px 0;
+        }
+
+        .sidebar-logo-container img {
+            width: 100px;
+            height: auto;
+        }
+
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
         [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
             color: var(--text-color) !important;
         }
     </style>
 """, unsafe_allow_html=True)
+
+# JavaScript que fuerza la conmutación de logos al detectar cambios de tema en Streamlit
+components.html("""
+    <script>
+        function updateLogo() {
+            const parentDoc = window.parent.document;
+            const darkImg = parentDoc.getElementById("kp-logo-dark");
+            const lightImg = parentDoc.getElementById("kp-logo-light");
+            
+            if (!darkImg || !lightImg) return;
+
+            // Revisa si la app o el sistema están en modo oscuro
+            const isDark = parentDoc.body.getAttribute("data-theme") === "dark" || 
+                           parentDoc.querySelector('[data-testid="stAppViewContainer"]').getAttribute("data-theme") === "dark" ||
+                           window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (isDark) {
+                darkImg.style.display = "none";
+                lightImg.style.display = "inline-block";
+            } else {
+                darkImg.style.display = "inline-block";
+                lightImg.style.display = "none";
+            }
+        }
+
+        // Ejecutar al cargar y observar cambios en la interfaz de Streamlit
+        updateLogo();
+        setInterval(updateLogo, 500);
+    </script>
+""", height=0, width=0)
 
 # 🔑 LECTURA DE API KEY DE GOOGLE MAPS
 if "GOOGLE_MAPS_API_KEY" in st.secrets:
@@ -79,11 +130,12 @@ except Exception:
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    # Carga nativa mediante st.image (evita desfases CSS)
-    if os.path.exists("logo_k_dark.png"):
-        st.image("logo_k_dark.png", width=100)
-    elif os.path.exists("logo.png"):
-        st.image("logo.png", width=100)
+    st.markdown(f"""
+        <div class="sidebar-logo-container">
+            <img id="kp-logo-dark" src="{img_dark_b64}" style="display: inline-block;" alt="KP Logo Azul">
+            <img id="kp-logo-light" src="{img_light_b64}" style="display: none;" alt="KP Logo Blanco">
+        </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
@@ -94,7 +146,7 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- ENCABEZADO SUPERIOR NATIIVO Y LIMPIO ---
+# --- ENCABEZADO SUPERIOR ---
 st.markdown(f"""
     <div class="kp-header-clean">
         <div>
