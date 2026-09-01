@@ -6,6 +6,7 @@ from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
 import os
+import base64
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -14,6 +15,15 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Carga de la K azul en Base64 para inyección HTML directa
+def get_base64_img(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return ""
+
+img_k_dark_b64 = get_base64_img("logo_k_dark.png")
 
 # Estilos CSS NATIVOS
 st.markdown("""
@@ -59,21 +69,23 @@ st.markdown("""
             text-transform: uppercase;
         }
 
-        /* Tarjeta Contenedora Neutra Blanca para asegurar visibilidad de la K Azul */
+        /* Tarjeta Contenedora Neutra Blanca para la K */
         .sidebar-logo-card {
             background-color: #FFFFFF !important;
             border-radius: 12px;
-            padding: 12px;
+            padding: 14px;
             text-align: center;
             margin-bottom: 15px;
             border: 1px solid #E2E8F0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: block;
         }
 
         .sidebar-logo-card img {
             width: 85px;
             height: auto;
             display: inline-block;
+            margin: 0 auto;
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
@@ -94,14 +106,15 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL CON TARJETA DE CONTRASTE PREDETERMINADA ---
+# --- BARRA LATERAL ---
 with st.sidebar:
-    st.markdown('<div class="sidebar-logo-card">', unsafe_allow_html=True)
-    if os.path.exists("logo_k_dark.png"):
-        st.image("logo_k_dark.png")
-    elif os.path.exists("logo.png"):
-        st.image("logo.png")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Contenedor + imagen unidos en una sola declaración HTML
+    if img_k_dark_b64:
+        st.markdown(f"""
+            <div class="sidebar-logo-card">
+                <img src="{img_k_dark_b64}" alt="KP Logo Azul">
+            </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
