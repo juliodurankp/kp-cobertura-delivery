@@ -16,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Carga de la K azul en Base64
+# Carga en Base64 de ambas versiones originales de la K
 def get_base64_img(file_path):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -24,8 +24,9 @@ def get_base64_img(file_path):
     return ""
 
 img_k_dark_b64 = get_base64_img("logo_k_dark.png")
+img_k_light_b64 = get_base64_img("logo_k_light.png")
 
-# CSS Inteligente: Inversión de color según tema
+# CSS Estricto de Conmutación manteniendo el vector original impecable
 st.markdown(f"""
     <style>
         .block-container {{ padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
@@ -79,17 +80,35 @@ st.markdown(f"""
             padding: 5px 0 15px 0;
         }}
         
-        /* Por defecto (Modo Claro): Muestra K Azul Marino */
         .sidebar-logo-container img {{
             width: 100px;
             height: auto;
-            transition: filter 0.3s ease;
         }}
 
-        /* Modo Oscuro: Invierte la K azul marino a Blanco manteniéndola nítida */
+        /* Reglas de Alternancia Estricta */
+        .img-dark-mode {{ display: none !important; }}
+        .img-light-mode {{ display: inline-block !important; }}
+
+        /* Detecta el tema oscuro global de Streamlit */
+        [data-theme="dark"] .img-dark-mode,
+        [data-testid="stSidebar"][data-theme="dark"] .img-dark-mode,
+        .stApp[data-theme="dark"] .img-dark-mode {{
+            display: inline-block !important;
+        }}
+
+        [data-theme="dark"] .img-light-mode,
+        [data-testid="stSidebar"][data-theme="dark"] .img-light-mode,
+        .stApp[data-theme="dark"] .img-light-mode {{
+            display: none !important;
+        }}
+
+        /* Detecta el tema oscuro del sistema si Streamlit no inyecta data-theme */
         @media (prefers-color-scheme: dark) {{
-            .sidebar-logo-container img {{
-                filter: brightness(0) invert(1);
+            :root:not([data-theme="light"]) .img-dark-mode {{
+                display: inline-block !important;
+            }}
+            :root:not([data-theme="light"]) .img-light-mode {{
+                display: none !important;
             }}
         }}
 
@@ -113,12 +132,12 @@ except Exception:
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    if img_k_dark_b64:
-        st.markdown(f"""
-            <div class="sidebar-logo-container">
-                <img src="{img_k_dark_b64}" alt="KP Logo">
-            </div>
-        """, unsafe_allow_html=True)
+    st.markdown(f"""
+        <div class="sidebar-logo-container">
+            <img src="{img_k_dark_b64}" class="img-light-mode" alt="KP Logo Azul">
+            <img src="{img_k_light_b64}" class="img-dark-mode" alt="KP Logo Blanco">
+        </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
