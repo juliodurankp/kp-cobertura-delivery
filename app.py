@@ -6,6 +6,7 @@ from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
 import os
+import base64
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -15,13 +16,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS NATIVOS Y LIMPIOS
-st.markdown("""
+# Carga en Base64 de ambas versiones originales de la K
+def get_base64_img(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return ""
+
+img_k_dark_b64 = get_base64_img("logo_k_dark.png")
+img_k_light_b64 = get_base64_img("logo_k_light.png")
+
+# CSS para alternancia por selector nativo de Streamlit
+st.markdown(f"""
     <style>
-        .block-container { padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
+        .block-container {{ padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
         
         /* Encabezado Superior Limpio Integrado */
-        .kp-header-clean {
+        .kp-header-clean {{
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -30,25 +41,25 @@ st.markdown("""
             margin-bottom: 20px;
         }
 
-        .kp-title-text {
+        .kp-title-text {{
             font-size: 1.6rem;
             font-weight: 800;
             letter-spacing: -0.5px;
             margin: 0;
             padding: 0;
             color: var(--text-color) !important;
-        }
+        }}
 
-        .kp-subtitle-text {
+        .kp-subtitle-text {{
             font-size: 0.85rem;
             color: #FF6B4A !important;
             font-weight: 700;
             letter-spacing: 0.8px;
             text-transform: uppercase;
             margin-top: 2px;
-        }
+        }}
 
-        .kp-badge-pill {
+        .kp-badge-pill {{
             background-color: #FF6B4A;
             color: #FFFFFF !important;
             padding: 6px 16px;
@@ -57,29 +68,46 @@ st.markdown("""
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-        }
+        }}
 
-        /* Adapta la K del sidebar automáticamente según el tema del Sidebar */
-        .sidebar-logo-wrapper {
+        /* Contenedor del Isotipo */
+        .sidebar-logo-container {{
             text-align: center;
             padding: 5px 0 15px 0;
-        }
+        }}
+        
+        .sidebar-logo-container img {{
+            width: 100px;
+            height: auto;
+        }}
 
-        /* En Modo Oscuro, vuelve blanca la K oscura mediante CSS nativo */
-        [data-testid="stSidebar"] [data-testid="stImage"] img {
-            transition: filter 0.2s ease;
-        }
+        /* REGLAS DE TEMA INTERNO DE STREAMLIT */
+        /* Por defecto (MODO LIGHT): Muestra K Azul con Fondo Claro */
+        .kp-k-dark-version {{ display: inline-block !important; }}
+        .kp-k-light-version {{ display: none !important; }}
 
-        @media (prefers-color-scheme: dark) {
-            [data-testid="stSidebar"] [data-testid="stImage"] img {
-                filter: brightness(0) invert(1);
-            }
-        }
+        /* Cuando el switch de Streamlit cambia a MODO DARK: Muestra K Blanca con Fondo Oscuro */
+        [data-testid="stAppViewContainer"]:has(.stApp[data-theme="dark"]),
+        .stApp[data-theme="dark"] .kp-k-dark-version,
+        [data-theme="dark"] .kp-k-dark-version {{
+            display: none !important;
+        }}
+
+        .stApp[data-theme="dark"] .kp-k-light-version,
+        [data-theme="dark"] .kp-k-light-version {{
+            display: inline-block !important;
+        }}
+
+        /* RESPALDO POR PREFERENCIA DEL SISTEMA OPERATIVO */
+        @media (prefers-color-scheme: dark) {{
+            :root:not([data-theme="light"]) .kp-k-dark-version {{ display: none !important; }}
+            :root:not([data-theme="light"]) .kp-k-light-version {{ display: inline-block !important; }}
+        }}
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
             color: var(--text-color) !important;
-        }
+        }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -96,11 +124,12 @@ except Exception:
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    # Mostramos la K nativa usando st.image (Streamlit maneja la ruta)
-    if os.path.exists("logo_k_dark.png"):
-        st.image("logo_k_dark.png", width=100)
-    elif os.path.exists("logo.png"):
-        st.image("logo.png", width=100)
+    st.markdown(f"""
+        <div class="sidebar-logo-container">
+            <img src="{img_k_dark_b64}" class="kp-k-dark-version" alt="KP Logo Azul">
+            <img src="{img_k_light_b64}" class="kp-k-light-version" alt="KP Logo Blanco">
+        </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
