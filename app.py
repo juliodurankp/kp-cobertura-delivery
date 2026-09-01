@@ -6,7 +6,6 @@ from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
 import os
-import base64
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -16,106 +15,54 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Carga en Base64 de ambas versiones originales de la K
-def get_base64_img(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return ""
-
-img_k_dark_b64 = get_base64_img("logo_k_dark.png")
-img_k_light_b64 = get_base64_img("logo_k_light.png")
-
-# CSS Estricto de Conmutación manteniendo el vector original impecable
-st.markdown(f"""
+# Estilos CSS NATIVOS (Sin banners rígidos ni choques de color)
+st.markdown("""
     <style>
-        .block-container {{ padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
+        .block-container { padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Banner Header */
-        .kp-header-b {{
-            background: linear-gradient(135deg, #0D2845 0%, #163B63 100%);
-            border-radius: 12px;
-            padding: 1.1rem 1.8rem;
+        /* Contenedor del Título Principal Integrado */
+        .kp-header-clean {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 15px rgba(13, 40, 69, 0.18);
-            margin-bottom: 1.2rem;
-            color: white !important;
-        }}
+            border-bottom: 2px solid rgba(255, 107, 74, 0.2);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
 
-        .kp-header-title {{
-            font-size: 1.5rem;
+        .kp-title-text {
+            font-size: 1.6rem;
             font-weight: 800;
-            color: #FFFFFF !important;
+            letter-spacing: -0.5px;
             margin: 0;
-            letter-spacing: 0.5px;
-            font-family: 'Helvetica Neue', sans-serif;
-        }}
+            padding: 0;
+            color: var(--text-color) !important;
+        }
 
-        .kp-header-sub {{
+        .kp-subtitle-text {
             font-size: 0.85rem;
             color: #FF6B4A !important;
-            margin: 0;
             font-weight: 700;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-        }}
+            margin-top: 2px;
+        }
 
-        .kp-city-badge {{
+        .kp-badge-pill {
             background-color: #FF6B4A;
             color: #FFFFFF !important;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.8rem;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-            box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
-        }}
-
-        /* Contenedor del Isotipo en Sidebar */
-        .sidebar-logo-container {{
-            text-align: center;
-            padding: 5px 0 15px 0;
-        }}
-        
-        .sidebar-logo-container img {{
-            width: 100px;
-            height: auto;
-        }}
-
-        /* Reglas de Alternancia Estricta */
-        .img-dark-mode {{ display: none !important; }}
-        .img-light-mode {{ display: inline-block !important; }}
-
-        /* Detecta el tema oscuro global de Streamlit */
-        [data-theme="dark"] .img-dark-mode,
-        [data-testid="stSidebar"][data-theme="dark"] .img-dark-mode,
-        .stApp[data-theme="dark"] .img-dark-mode {{
-            display: inline-block !important;
-        }}
-
-        [data-theme="dark"] .img-light-mode,
-        [data-testid="stSidebar"][data-theme="dark"] .img-light-mode,
-        .stApp[data-theme="dark"] .img-light-mode {{
-            display: none !important;
-        }}
-
-        /* Detecta el tema oscuro del sistema si Streamlit no inyecta data-theme */
-        @media (prefers-color-scheme: dark) {{
-            :root:not([data-theme="light"]) .img-dark-mode {{
-                display: inline-block !important;
-            }}
-            :root:not([data-theme="light"]) .img-light-mode {{
-                display: none !important;
-            }}
-        }}
+        }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
             color: var(--text-color) !important;
-        }}
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -132,12 +79,11 @@ except Exception:
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    st.markdown(f"""
-        <div class="sidebar-logo-container">
-            <img src="{img_k_dark_b64}" class="img-light-mode" alt="KP Logo Azul">
-            <img src="{img_k_light_b64}" class="img-dark-mode" alt="KP Logo Blanco">
-        </div>
-    """, unsafe_allow_html=True)
+    # Carga nativa mediante st.image (evita desfases CSS)
+    if os.path.exists("logo_k_dark.png"):
+        st.image("logo_k_dark.png", width=100)
+    elif os.path.exists("logo.png"):
+        st.image("logo.png", width=100)
 
     st.markdown("### 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
@@ -148,14 +94,14 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- BANNER ENCABEZADO SUPERIOR ---
+# --- ENCABEZADO SUPERIOR NATIIVO Y LIMPIO ---
 st.markdown(f"""
-    <div class="kp-header-b">
+    <div class="kp-header-clean">
         <div>
-            <h1 class="kp-header-title">KITCHEN PARTNER 360™</h1>
-            <p class="kp-header-sub">Análisis y Mapeo Estratégico de Cobertura Delivery</p>
+            <h1 class="kp-title-text">KITCHEN PARTNER 360™</h1>
+            <div class="kp-subtitle-text">Análisis y Mapeo Estratégico de Cobertura Delivery</div>
         </div>
-        <div class="kp-city-badge">
+        <div class="kp-badge-pill">
             COBERTURA {ciudad_seleccionada.upper()}
         </div>
     </div>
