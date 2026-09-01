@@ -23,9 +23,10 @@ def get_base64_img(file_path):
             return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
     return ""
 
+img_dark_b64 = get_base64_img("logo_k_dark.png")
 img_light_b64 = get_base64_img("logo_k_light.png")
 
-# CSS para Fijar Barra Lateral y Banner en Azul Marino Corporativo (#0D2845)
+# CSS adaptable al Tema de Streamlit (Sin forzar fondos)
 st.markdown(f"""
     <style>
         .block-container {{ padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }}
@@ -73,14 +74,9 @@ st.markdown(f"""
             box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
         }}
 
-        /* Fondo Fijo Azul Marino Corporativo para el Sidebar */
-        [data-testid="stSidebar"] {{
-            background-color: #0D2845 !important;
-        }}
-
         .sidebar-logo-container {{
             text-align: center;
-            padding: 10px 0 15px 0;
+            padding: 5px 0 15px 0;
         }}
         
         .sidebar-logo-container img {{
@@ -88,15 +84,38 @@ st.markdown(f"""
             height: auto;
         }}
 
-        /* Forzar texto claro en Sidebar siempre */
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] caption {{
-            color: #FFFFFF !important;
+        /* Conmutación Real por CSS Selectors de la estructura interna de Streamlit */
+        .kp-k-dark {{ display: inline-block; }}
+        .kp-k-light {{ display: none; }}
+
+        /* Detecta el fondo oscuro en el sidebar de Streamlit */
+        [data-testid="stSidebar"][data-theme="dark"] .kp-k-dark,
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] .kp-k-dark {{
+            display: var(--kp-dark-hide, inline-block);
         }}
 
-        [data-testid="stSidebar"] caption {{
-            color: #CBD5E1 !important;
+        /* Regla con selector de tema global de Streamlit */
+        @media (prefers-color-scheme: dark) {{
+            .kp-k-dark {{ display: none !important; }}
+            .kp-k-light {{ display: inline-block !important; }}
+        }}
+
+        /* Adaptación extra para el selector interno de Streamlit */
+        html[data-theme="dark"] .kp-k-dark,
+        body[data-theme="dark"] .kp-k-dark,
+        [data-theme="dark"] .kp-k-dark {{
+            display: none !important;
+        }}
+
+        html[data-theme="dark"] .kp-k-light,
+        body[data-theme="dark"] .kp-k-light,
+        [data-theme="dark"] .kp-k-light {{
+            display: inline-block !important;
+        }}
+
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
+            color: var(--text-color) !important;
         }}
     </style>
 """, unsafe_allow_html=True)
@@ -112,11 +131,12 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL CON K BLANCA Y FONDO AZUL ---
+# --- BARRA LATERAL (RESPETA EL TEMA Y COMMUTA EL LOGO) ---
 with st.sidebar:
     st.markdown(f"""
         <div class="sidebar-logo-container">
-            <img src="{img_light_b64}" alt="KP Logo Blanco">
+            <img src="{img_dark_b64}" class="kp-k-dark" alt="KP Logo Azul">
+            <img src="{img_light_b64}" class="kp-k-light" alt="KP Logo Blanco">
         </div>
     """, unsafe_allow_html=True)
 
