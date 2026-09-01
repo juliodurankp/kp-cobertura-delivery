@@ -95,20 +95,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔑 LECTURA DE API KEY DE GOOGLE MAPS
-if "GOOGLE_MAPS_API_KEY" in st.secrets:
-    GOOGLE_MAPS_API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
-else:
-    GOOGLE_MAPS_API_KEY = "AIzaSyC81y07cCifkIrHEm-GR0RUpfBd9XnPJ38"
+# 🔑 LECTURA SEGURA DE API KEY DESDE STREAMLIT SECRETS (SIN HARCODEADO)
+GOOGLE_MAPS_API_KEY = st.secrets.get("GOOGLE_MAPS_API_KEY", None)
 
-try:
-    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
-except Exception:
+if GOOGLE_MAPS_API_KEY:
+    try:
+        gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+    except Exception:
+        gmaps = None
+else:
     gmaps = None
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    # Contenedor + imagen unidos en una sola declaración HTML
     if img_k_dark_b64:
         st.markdown(f"""
             <div class="sidebar-logo-card">
