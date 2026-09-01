@@ -5,73 +5,81 @@ import googlemaps
 from shapely.geometry import Polygon, Point
 import pyproj
 from shapely.ops import transform
-import json
 import os
 
-def obtener_ruta_logo():
-    extensiones = ["logo.png", "logo.jpg", "logo.jpeg", "Logo.png", "LOGO.PNG"]
-    for ext in extensiones:
-        if os.path.exists(ext):
-            return ext
-    return None
-
-logo_path = obtener_ruta_logo()
-
+# Configuración de página
 st.set_page_config(
-    page_title="Kitchen Partner | Cobertura Delivery Multi-Ciudad",
-    page_icon=logo_path if logo_path else "📍",
+    page_title="Kitchen Partner | Cobertura Delivery",
+    page_icon="logo_k_dark.png" if os.path.exists("logo_k_dark.png") else "📍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# Inyección de CSS para alternar Logos e Integración de Marca según Tema (Light / Dark)
 st.markdown("""
     <style>
         .block-container { padding-top: 1rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
-        .kp-header {
-            background: linear-gradient(135deg, #0D2845 0%, #163B63 100%);
-            padding: 1.2rem 2rem;
+        
+        /* Contenedor del Banner Superior */
+        .kp-header-container {
+            width: 100%;
+            padding: 0.8rem 1.5rem;
             border-radius: 12px;
-            color: white !important;
             margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 12px rgba(13, 40, 69, 0.15);
+            transition: all 0.3s ease;
         }
-        .kp-title-container { display: flex; align-items: center; gap: 15px; }
-        .kp-title { color: #FFFFFF !important; font-size: 1.8rem; font-weight: 800; margin: 0; font-family: 'Helvetica Neue', sans-serif; }
-        .kp-subtitle { color: #FF6B4A !important; font-size: 0.95rem; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .kp-badge {
-            background-color: rgba(255, 107, 74, 0.2);
-            border: 1px solid #FF6B4A;
-            color: #FF6B4A !important;
-            padding: 4px 12px;
+
+        /* Adaptación en MODO CLARO */
+        @media (prefers-color-scheme: light) {
+            .kp-header-container {
+                background-color: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                box-shadow: 0 4px 12px rgba(13, 40, 69, 0.05);
+            }
+            .img-full-light, .img-k-light { display: none !important; }
+            .img-full-dark, .img-k-dark { display: block !important; }
+            .kp-city-badge {
+                background-color: #0D2845;
+                color: #FFFFFF !important;
+            }
+        }
+
+        /* Adaptación en MODO OSCURO */
+        @media (prefers-color-scheme: dark) {
+            .kp-header-container {
+                background-color: #0D1117;
+                border: 1px solid #30363D;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+            .img-full-dark, .img-k-dark { display: none !important; }
+            .img-full-light, .img-k-light { display: block !important; }
+            .kp-city-badge {
+                background-color: #FF6B4A;
+                color: #FFFFFF !important;
+            }
+        }
+
+        .kp-city-badge {
+            padding: 6px 16px;
             border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
-        [data-testid="stSidebar"] h1, 
-        [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, 
-        [data-testid="stSidebar"] h4,
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] .stMarkdown {
+
+        /* Estilos Sidebar */
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
             color: var(--text-color) !important;
-        }
-        .stButton>button {
-            background-color: #FF6B4A !important;
-            color: white !important;
-            border-radius: 8px !important;
-            border: none !important;
-            font-weight: 600 !important;
-        }
-        .stButton>button:hover {
-            background-color: #E05536 !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# 🔑 LECTURA DE API KEY (Local o Nube vía Secrets)
+# 🔑 LECTURA DE API KEY
 if "GOOGLE_MAPS_API_KEY" in st.secrets:
     GOOGLE_MAPS_API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
 else:
@@ -82,18 +90,45 @@ try:
 except Exception:
     gmaps = None
 
-# SELECTOR MULTI-CIUDAD EN LA BARRA LATERAL
-if logo_path:
-    st.sidebar.image(logo_path, use_container_width=True)
+# --- BARRA LATERAL (SOLO ISOTIPO K) ---
+with st.sidebar:
+    if os.path.exists("logo_k_dark.png") and os.path.exists("logo_k_light.png"):
+        st.markdown("""
+            <div style="text-align: center; padding: 10px 0;">
+                <img src="logo_k_dark.png" class="img-k-dark" style="max-width: 110px; margin: 0 auto;">
+                <img src="logo_k_light.png" class="img-k-light" style="max-width: 110px; margin: 0 auto;">
+            </div>
+        """, unsafe_allow_html=True)
+    elif os.path.exists("logo.png"):
+        st.image("logo.png", width=120)
 
-st.sidebar.markdown("### 🎯 Panel de Control KP 360™")
-st.sidebar.caption("Evaluación de Coberturas Multi-Plataforma")
+    st.markdown("### 🎯 Panel KP 360™")
+    st.caption("Evaluación de Coberturas Multi-Plataforma")
+    st.markdown("---")
+    
+    ciudad_seleccionada = st.selectbox(
+        "📍 Selecciona la Ciudad:",
+        ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
+    )
 
-st.sidebar.markdown("---")
-ciudad_seleccionada = st.sidebar.selectbox(
-    "📍 Selecciona la Ciudad:",
-    ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
-)
+# --- ENCABEZADO SUPERIOR (LOGO COMPLETO) ---
+f_dark_exists = os.path.exists("logo_full_dark.png") or os.path.exists("logo.png")
+f_light_exists = os.path.exists("logo_full_light.png")
+
+logo_dark_src = "logo_full_dark.png" if os.path.exists("logo_full_dark.png") else "logo.png"
+logo_light_src = "logo_full_light.png" if os.path.exists("logo_full_light.png") else logo_dark_src
+
+st.markdown(f"""
+    <div class="kp-header-container">
+        <div style="max-width: 380px;">
+            <img src="{logo_dark_src}" class="img-full-dark" style="width: 100%; height: auto;">
+            <img src="{logo_light_src}" class="img-full-light" style="width: 100%; height: auto;">
+        </div>
+        <div class="kp-city-badge">
+            COBERTURA {ciudad_seleccionada.upper()}
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Configuración por Ciudad
 CONFIG_CIUDADES = {
@@ -145,31 +180,6 @@ CONFIG_CIUDADES = {
 cfg_activa = CONFIG_CIUDADES[ciudad_seleccionada]
 POLIGONO_URBANO = cfg_activa["poligono"]
 
-if logo_path:
-    col1, col2 = st.columns([1, 5])
-    with col1:
-        st.image(logo_path, width=130)
-    with col2:
-        st.markdown(f"""
-            <div style="padding-top: 5px;">
-                <h1 style="color: #0D2845; font-weight: 800; margin:0; font-size: 2.1rem;">KITCHEN PARTNER</h1>
-                <p style="color: #FF6B4A; font-weight: 700; margin:0; font-size: 1rem; letter-spacing: 1px;">TU SOCIO ESTRATÉGICO EN DELIVERY • {ciudad_seleccionada.upper()}</p>
-            </div>
-        """, unsafe_allow_html=True)
-else:
-    st.markdown(f"""
-        <div class="kp-header">
-            <div class="kp-title-container">
-                <div style="background-color: #FF6B4A; color: white; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.6rem;">K</div>
-                <div>
-                    <h1 class="kp-title">KITCHEN PARTNER</h1>
-                    <p class="kp-subtitle">Tu Socio Estratégico en Delivery</p>
-                </div>
-            </div>
-            <div class="kp-badge">Mapeo de Cobertura {ciudad_seleccionada}</div>
-        </div>
-    """, unsafe_allow_html=True)
-
 @st.cache_data(show_spinner=False)
 def obtener_sugerencias_google(texto_busqueda, lat_c, lon_c):
     if not gmaps or not texto_busqueda or len(texto_busqueda.strip()) < 2:
@@ -183,13 +193,7 @@ def obtener_sugerencias_google(texto_busqueda, lat_c, lon_c):
             radius=25000,
             language="es"
         )
-        sugerencias = []
-        for p in predictions:
-            sugerencias.append({
-                "label": p['description'],
-                "place_id": p['place_id']
-            })
-        return sugerencias
+        return [{"label": p['description'], "place_id": p['place_id']} for p in predictions]
     except Exception:
         return []
 
@@ -228,6 +232,7 @@ def recortar_con_manzana_urbana(lat, lon, radio_km):
         return box_wgs.intersection(POLIGONO_URBANO)
     return box_wgs
 
+# CONTROLES SIDEBAR
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔍 Filtro de Plataformas")
 apps_seleccionadas = st.sidebar.multiselect(
@@ -245,7 +250,6 @@ sucursales = []
 for i in range(num_sucursales):
     st.sidebar.markdown(f"**📍 Sucursal {i+1}**")
     def_lat, def_lon, def_name = cfg_activa["defaults"][i % len(cfg_activa["defaults"])]
-    
     key_prefix = f"{ciudad_seleccionada}_suc_{i}"
     
     if f"{key_prefix}_lat" not in st.session_state:
@@ -295,10 +299,9 @@ radio_didi = st.sidebar.slider("DiDi Food (km)", 0.5, 8.0, 2.5, 0.5)
 radio_rappi = st.sidebar.slider("Rappi (km)", 0.5, 10.0, 3.5, 0.5)
 radio_uber = st.sidebar.slider("Uber Eats (km)", 0.5, 12.0, 5.0, 0.5)
 
-# --- MAPA RENDERING ---
+# MAPA
 avg_lat = sum(s["lat"] for s in sucursales) / len(sucursales)
 avg_lon = sum(s["lon"] for s in sucursales) / len(sucursales)
-
 dynamic_map_id = f"{ciudad_seleccionada}_" + "_".join([f"{s['lat']:.5f}_{s['lon']:.5f}" for s in sucursales])
 
 m = folium.Map(location=[avg_lat, avg_lon], zoom_start=12, tiles="OpenStreetMap")
