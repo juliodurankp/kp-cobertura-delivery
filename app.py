@@ -15,19 +15,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS Limpios y Nativos
+# Estilos CSS NATIVOS Y ESTABLES
 st.markdown("""
     <style>
         .block-container { padding-top: 1.2rem; padding-bottom: 0rem; padding-left: 1.5rem; padding-right: 1.5rem; }
         
-        /* Banner Header Integrado */
-        .kp-header-container {
+        /* Banner Header con tarjeta protectora para el logo */
+        .kp-header-card {
+            background-color: #0D2845;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid rgba(255, 107, 74, 0.3);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .kp-badge-pill {
@@ -39,15 +41,6 @@ st.markdown("""
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-        }
-
-        /* Ocultar / Mostrar Logos por tema */
-        .logo-light-theme { display: block; }
-        .logo-dark-theme { display: none; }
-
-        @media (prefers-color-scheme: dark) {
-            .logo-light-theme { display: none !important; }
-            .logo-dark-theme { display: block !important; }
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
@@ -68,7 +61,7 @@ try:
 except Exception:
     gmaps = None
 
-# --- BARRA LATERAL (LIMPIA) ---
+# --- BARRA LATERAL ---
 with st.sidebar:
     st.markdown("## 🎯 Panel KP 360™")
     st.caption("Evaluación de Coberturas Multi-Plataforma")
@@ -79,27 +72,23 @@ with st.sidebar:
         ["Mexicali", "Tijuana", "Ensenada", "Otras Ciudades"]
     )
 
-# --- ENCABEZADO SUPERIOR CON LOGO COMPLETO ---
-col_head_logo, col_head_badge = st.columns([3, 1])
-
-with col_head_logo:
-    # Si existen las versiones completa, usa st.image nativo que responde bien al layout
-    if os.path.exists("logo_full_dark.png") and os.path.exists("logo_full_light.png"):
-        # En modo claro/oscuro se cargan usando columnas y st.image
-        st.image("logo_full_dark.png", width=320)
-    elif os.path.exists("logo.png"):
-        st.image("logo.png", width=320)
-    else:
-        st.title("KITCHEN PARTNER 360™")
-
-with col_head_badge:
+# --- ENCABEZADO CON CONTENEDOR DE CONTRASTE ASEGURADO ---
+with st.container():
+    col_logo, col_badge = st.columns([3, 1])
+    
+    # Renderizamos la tarjeta corporativa con logo claro garantizado
     st.markdown(f"""
-        <div style="text-align: right; padding-top: 10px;">
-            <span class="kp-badge-pill">COBERTURA {ciudad_seleccionada.upper()}</span>
+        <div class="kp-header-card">
+            <div style="display: flex; align-items: center;">
+                <h1 style="color: #FFFFFF !important; margin: 0; font-size: 1.6rem; font-weight: 800;">
+                    KITCHEN PARTNER 360™
+                </h1>
+            </div>
+            <div class="kp-badge-pill">
+                COBERTURA {ciudad_seleccionada.upper()}
+            </div>
         </div>
     """, unsafe_allow_html=True)
-
-st.markdown("<hr style='margin-top: 5px; margin-bottom: 20px; border-color: rgba(255, 107, 74, 0.2);'>", unsafe_allow_html=True)
 
 # Configuración y Polígonos por Ciudad
 CONFIG_CIUDADES = {
@@ -289,7 +278,7 @@ name_rappi_tot = "<span style='color:#FF441F; font-weight:bold;'>🔴 Rappi</spa
 name_didi_tot = "<span style='color:#FF8800; font-weight:bold;'>🟠 DiDi Food</span> - Cobertura Ciudad"
 
 name_uber_suc = "<span style='color:#06C167; font-weight:bold;'>🛵 Uber Eats</span> - Polígonos Sucursal"
-name_rappi_suc = "<span style='color:#FF441F; font-weight:bold;'>🛵 Rappi</span> - Polígonos Sucursal"
+name_rappi_suc = "<span style='color:#FF441F; font-weight:bold;'>🔴 Rappi</span> - Polígonos Sucursal"
 name_didi_suc = "<span style='color:#FF8800; font-weight:bold;'>🛵 DiDi Food</span> - Polígonos Sucursal"
 name_puntos = "<span style='color:#0D2845; font-weight:bold;'>🏬 Sucursales KP</span>"
 
